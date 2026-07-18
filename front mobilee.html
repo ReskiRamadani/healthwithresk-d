@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MyHealth App</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="bg-blue-50 font-sans">
+    
+    <nav class="bg-blue-600 p-5 text-white text-center shadow-lg">
+        <h1 class="text-xl font-bold"><i class="fas fa-heartbeat mr-2"></i>MY HEALTH TRACKER</h1>
+    </nav>
+
+    <div class="p-4 max-w-md mx-auto">
+        
+        <div id="healthTip" class="bg-gradient-to-r from-green-400 to-blue-500 p-4 rounded-xl shadow-md mb-6 text-white italic text-sm">
+            <i class="fas fa-lightbulb mr-2"></i>
+            <span id="tipContent">Memuat tips kesehatan harian...</span>
+        </div>
+
+        <div class="bg-white p-6 rounded-2xl shadow-sm mb-6 border border-blue-100">
+            <h2 class="text-lg font-bold text-gray-700 mb-4 tracking-tight">Catat Kondisimu</h2>
+            <div class="space-y-4">
+                <div>
+                    <label class="text-xs font-semibold text-gray-500 uppercase">Tanggal</label>
+                    <input type="date" id="date" class="w-full border-b-2 border-gray-200 focus:border-blue-500 outline-none p-2 transition-all">
+                </div>
+                <div class="flex gap-4">
+                    <div class="flex-1">
+                        <label class="text-xs font-semibold text-gray-500 uppercase">Berat (kg)</label>
+                        <input type="number" id="weight" placeholder="00" class="w-full border-b-2 border-gray-200 focus:border-blue-500 outline-none p-2 transition-all">
+                    </div>
+                    <div class="flex-1">
+                        <label class="text-xs font-semibold text-gray-500 uppercase">Tensi (bpm)</label>
+                        <input type="text" id="bp" placeholder="120/80" class="w-full border-b-2 border-gray-200 focus:border-blue-500 outline-none p-2 transition-all">
+                    </div>
+                </div>
+                <button onclick="saveData()" class="w-full bg-blue-600 text-white py-3 rounded-xl font-bold shadow-blue-200 shadow-lg hover:bg-blue-700 active:scale-95 transition-all">
+                    Simpan Data Sekarang
+                </button>
+            </div>
+        </div>
+
+        <div class="flex justify-between items-center mb-4">
+            <h2 class="font-bold text-gray-800">Riwayat Catatan</h2>
+            <span class="text-xs bg-blue-200 text-blue-700 px-2 py-1 rounded-full font-bold">Terbaru</span>
+        </div>
+        
+        <div id="logsContainer" class="space-y-3 pb-10">
+            </div>
+    </div>
+
+    <script>
+        // Daftar Tips Kesehatan
+        const tips = [
+            "Minum air putih minimal 8 gelas sehari ya!",
+            "Jalan kaki 15 menit hari ini bisa memperbaiki mood.",
+            "Jangan lupa tidur cukup 7-8 jam agar tubuh bugar.",
+            "Kurangi konsumsi gula berlebih hari ini.",
+            "Sarapan sehat memberikan energi maksimal.",
+            "Duduk tegak! Punggungmu akan berterima kasih.",
+            "Istirahatkan mata dari layar setiap 20 menit."
+        ];
+
+        // Tampilkan tips random
+        document.getElementById('tipContent').innerText = tips[Math.floor(Math.random() * tips.length)];
+
+        async function loadLogs() {
+            const res = await fetch('/api/logs');
+            const data = await res.json();
+            const container = document.getElementById('logsContainer');
+            
+            if(data.length === 0) {
+                container.innerHTML = `<p class="text-center text-gray-400 text-sm">Belum ada catatan.</p>`;
+                return;
+            }
+
+            container.innerHTML = data.map(log => `
+                <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex items-center gap-4 transition-all hover:shadow-md">
+                    <div class="bg-blue-100 p-3 rounded-lg text-blue-600">
+                        <i class="fas fa-calendar-alt text-xl"></i>
+                    </div>
+                    <div class="flex-1">
+                        <p class="text-[10px] font-bold text-blue-400 uppercase leading-none">${log.date}</p>
+                        <div class="flex justify-between mt-2 pr-2">
+                            <span class="text-gray-700 font-bold"><i class="fas fa-weight mr-1 text-gray-400"></i> ${log.weight} kg</span>
+                            <span class="text-gray-700 font-bold"><i class="fas fa-heart text-red-400 mr-1"></i> ${log.blood_pressure}</span>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function saveData() {
+            const payload = {
+                date: document.getElementById('date').value,
+                weight: document.getElementById('weight').value,
+                blood_pressure: document.getElementById('bp').value
+            };
+            
+            if(!payload.date || !payload.weight) {
+                alert("Isi tanggal dan berat dulu ya!");
+                return;
+            }
+
+            await fetch('/api/logs', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            
+            // Bersihkan form
+            document.getElementById('weight').value = '';
+            document.getElementById('bp').value = '';
+            
+            loadLogs();
+        }
+
+        loadLogs();
+    </script>
+</body>
+</html>

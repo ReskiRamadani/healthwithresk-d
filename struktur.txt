@@ -1,0 +1,5 @@
+health-app/
+├── server.js          (Backend & Database)
+├── public/
+│   └── index.html     (Frontend)
+└── package.json       (Konfigurasi Node.js)
